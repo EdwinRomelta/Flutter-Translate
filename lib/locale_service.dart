@@ -5,11 +5,20 @@ import 'global.dart';
 
 class LocaleService
 {
-    static Future<Map<Locale, String>> getLocalesMap(List<String> locales, String basePath) async
+    static Future<Map<Locale, List<String>>> getLocalesMap(List<String> locales, String basePath, List<String> packagesPath) async
     {
         var files = await LocaleFileService.getLocaleFiles(locales, basePath);
-
-        return files.map((x,y) => MapEntry(localeFromString(x), y));
+        final fileMap = files.map((x,y) => MapEntry(localeFromString(x), [y]));
+        if(packagesPath != null) {
+            for (final packagePath in packagesPath) {
+                var packageFiles = await LocaleFileService.getLocaleFiles(
+                    locales, packagePath);
+                for (final file in packageFiles.entries) {
+                    fileMap[localeFromString(file.key)].add(file.value);
+                }
+            }
+        }
+        return fileMap;
     }
 
     static Locale findLocale(Locale locale, List<Locale> supportedLocales)
@@ -24,13 +33,21 @@ class LocaleService
         return existing;
     }
 
-    static Future<Map<String, dynamic>> getLocaleContent(Locale locale, Map<Locale, String> supportedLocales) async
+    static Future<Map<String, dynamic>> getLocaleContent(Locale locale, Map<Locale, List<String>> supportedLocales) async
     {
-        var file = supportedLocales[locale];
+        final localizationMap = <String, dynamic>{};
+        var files = supportedLocales[locale];
 
-        var content = await LocaleFileService.getLocaleContent(file);
+        for(final file in files) {
+            var content = await LocaleFileService.getLocaleContent(file);
+            var map = json.decode(content);
+            if(file.startsWith('packages/')){
+                map = {file.split('/')[1] : map};
+            }
+            localizationMap.addAll(map);
+        }
 
-        return json.decode(content);
+        return localizationMap;
     }
 
 

@@ -13,7 +13,7 @@ class LocalizationDelegate extends LocalizationsDelegate<Localization>
 
     final List<Locale> supportedLocales;
 
-    final Map<Locale, String> supportedLocalesMap;
+    final Map<Locale, List<String>> supportedLocalesMap;
 
     final ITranslatePreferences preferences;
 
@@ -69,12 +69,13 @@ class LocalizationDelegate extends LocalizationsDelegate<Localization>
     static Future<LocalizationDelegate> create({@required String fallbackLocale,
                                                 @required List<String> supportedLocales,
                                                 String basePath = Constants.localizedAssetsPath,
+                                                List<String> packagePath,
                                                 ITranslatePreferences preferences}) async
     {
         WidgetsFlutterBinding.ensureInitialized();
 
         var fallback = localeFromString(fallbackLocale);
-        var localesMap = await LocaleService.getLocalesMap(supportedLocales, basePath);
+        var localesMap = await LocaleService.getLocalesMap(supportedLocales, basePath, packagePath);
         var locales = localesMap.keys.toList();
 
         ConfigurationValidator.validate(fallback, locales);
